@@ -27,325 +27,37 @@
   .scorechip{background:rgba(255,255,255,0.03);padding:8px 12px;border-radius:999px;font-weight:600}
   .question{font-size:18px;margin:6px 0 16px}
   .options{display:grid;gap:10px}
-  .opt{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);padding:12px 14px;border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:12px;transition:transform 160ms, box-shadow 160ms}
+  .opt{
+    background:rgba(255,255,255,0.02);
+    border:1px solid rgba(255,255,255,0.03);
+    padding:12px 14px;border-radius:10px;
+    cursor:pointer;display:flex;align-items:center;gap:12px;
+    transition:transform 160ms, box-shadow 160ms;
+    color:#f1f5f9; /* brighter text */
+  }
   .opt:hover{transform:translateY(-4px);box-shadow:0 8px 20px rgba(2,6,23,0.6)}
-  .opt .letter{width:34px;height:34px;border-radius:8px;display:inline-grid;place-items:center;font-weight:700;background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.02)}
+  .opt .letter{
+    width:34px;height:34px;border-radius:8px;display:inline-grid;place-items:center;
+    font-weight:700;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.06);
+    color:white; /* bright letter */
+  }
   .opt.correct{border-color:rgba(16,185,129,0.25);background:linear-gradient(90deg, rgba(16,185,129,0.06), rgba(16,185,129,0.02))}
   .opt.wrong{border-color:rgba(239,68,68,0.18);background:linear-gradient(90deg, rgba(239,68,68,0.04), transparent)}
   .controls{display:flex;justify-content:space-between;align-items:center;margin-top:18px;gap:12px}
-  .btn{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:10px 14px;border-radius:10px;color:inherit;cursor:pointer;font-weight:600}
+  .btn{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:10px 14px;border-radius:10px;color:#f1f5f9;cursor:pointer;font-weight:600}
   .btn.primary{background:linear-gradient(90deg,var(--accent),#60a5fa);border:0;color:#042023}
   .small{font-size:13px;color:var(--muted)}
   .result{display:none; margin-top:18px;padding:14px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03)}
   .result h2{margin:0 0 6px}
   .explain{margin-top:10px;font-size:13px;color:var(--muted)}
   .badge{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:700}
-  /* confetti */
   .confetti{position:fixed;left:0;top:0;pointer-events:none;width:100%;height:100%;overflow:hidden;mix-blend-mode:screen}
   .confetti .piece{position:absolute;width:10px;height:16px;transform-origin:center;opacity:0;animation:fall 2.4s linear forwards}
   @keyframes fall{0%{transform:translateY(-20vh) rotate(0) scale(0.8);opacity:1}100%{transform:translateY(120vh) rotate(720deg) scale(1);opacity:1}}
-  /* responsive */
-  @media (max-width:640px){
-    .question{font-size:16px}
-    header{gap:10px}
-  }
+  @media (max-width:640px){.question{font-size:16px}header{gap:10px}}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div class="logo" aria-hidden>
-      <!-- tiny neural-ish svg -->
-      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden>
-        <circle cx="12" cy="12" r="3.2" />
-        <path d="M4 12h3m10 0h3M12 4v3M12 17v3M6 6l2 2M16 16l2 2M6 18l2-2M16 8l2-2"/>
-      </svg>
-    </div>
-    <div>
-      <h1>Gensyn — Quick Quiz (20 Q)</h1>
-      <p class="lead">Test your knowledge of Gensyn: mission, research, and products (Judge, BlockAssist, Verde, RL Swarm, NoLoCo, etc.).</p>
-    </div>
-    <div style="margin-left:auto">
-      <div class="scorechip" id="scoreChip">Score: 0</div>
-    </div>
-  </header>
-
-  <div class="card" role="application" aria-labelledby="quizTitle">
-    <div class="progress" aria-hidden><i id="progressBar"></i></div>
-
-    <div class="qtop">
-      <div class="qcount" id="qCount">Question 1 / 20</div>
-      <div class="small">Time per quiz: <span id="timer">—</span></div>
-    </div>
-
-    <div class="question" id="questionText">Loading...</div>
-
-    <div class="options" id="options"></div>
-
-    <div class="controls">
-      <button id="prevBtn" class="btn" disabled>◀ Prev</button>
-      <div style="display:flex;gap:8px">
-        <button id="skipBtn" class="btn">Skip ⏭</button>
-        <button id="nextBtn" class="btn primary">Next ▶</button>
-      </div>
-    </div>
-
-    <div class="result" id="resultCard" aria-live="polite">
-      <h2 id="resultText"></h2>
-      <div class="explain" id="explainText"></div>
-      <div style="margin-top:12px">
-        <a href="https://www.gensyn.ai" target="_blank" rel="noopener" class="small">Learn more at Gensyn</a>
-      </div>
-    </div>
-  </div>
-
-  <div style="text-align:center;margin-top:14px;color:var(--muted);font-size:13px">
-    Quiz created from Gensyn site & blog content.
-  </div>
-</div>
-
-<!-- confetti container -->
-<div class="confetti" id="confetti"></div>
-
-<script>
-/*
-  Quiz source: facts and pages on Gensyn (mission, Judge, BlockAssist, Verde, RL Swarm, NoLoCo, research posts).
-  Crafted to be informative and interactive.
-  (This single-file app stores everything in memory—no server)
-*/
-
-/* QUESTIONS: 20 items (each has text, 4 options, index-of-correct, explanation) */
-const questions = [
-  {q:"What phrase best describes Gensyn's core mission?", 
-   o:["To build a private social network","To network the core resources required for machine intelligence","To create consumer AI assistants for phones","To provide only cloud compute for enterprises"], 
-   a:1,
-   e:"Gensyn's site states its mission: 'The network for machine intelligence' — to network core resources required for machine intelligence."},
-
-  {q:"Which product did Gensyn introduce as a verifiable AI evaluation system?", 
-   o:["BlockAssist","Judge","GenRL","Verde"], a:1,
-   e:"Gensyn announced 'Judge' as a cryptographically verifiable AI evaluation system."},
-
-  {q:"What is 'BlockAssist' as described in Gensyn's blog?", 
-   o:["A dataset marketplace","An AI Minecraft assistant that learns from player actions","A new GPU hardware board","A cloud monitoring tool"], a:1,
-   e:"BlockAssist is described as an AI Minecraft assistant that learns from in-game actions for reinforcement learning research."},
-
-  {q:"Which research project by Gensyn focuses on verification over untrusted nodes?", 
-   o:["SAPO","Verde","NoLoCo","GenRL"], a:1,
-   e:"'Verde' is a verification system for machine learning over untrusted nodes."},
-
-  {q:"What problem does NoLoCo address in model training?", 
-   o:["Privacy-preserving inference","Training large models without all-reduce (communication)","Faster data labeling","Model compression"], a:1,
-   e:"NoLoCo proposes training large models with no all-reduce to reduce global synchronization and communication."},
-
-  {q:"'RL Swarm' in Gensyn is primarily a framework for:", 
-   o:["Collaborative reinforcement learning with many agents","Supervised learning datasets","Image generation models","Financial forecasting"], a:0,
-   e:"RL Swarm is a framework for collaborative reinforcement learning, enabling multiple agents/nodes to work together."},
-
-  {q:"Which of these did Gensyn highlight as a reason decentralized training is important?", 
-   o:["Cutting edge GPUs are free","Centralized training is impossible","Training costs are very high and decentralization enables scaling across consumer devices","Models don't generalize"], a:2,
-   e:"Gensyn notes that training costs are enormous (billions) and decentralized infrastructure helps scale training across devices."},
-
-  {q:"Which of the following is a Gensyn research output mentioned on their blog?", 
-   o:["CheckFree","NoLoCo","SAPO","All of the above"], a:3,
-   e:"Gensyn's blog lists CheckFree, NoLoCo and SAPO among research outputs."},
-
-  {q:"'GenRL' is related to:", 
-   o:["A reinforcement learning backend/framework","A data labeling tool","A token standard","A cryptographic primitive"], a:0,
-   e:"GenRL is described as a new framework/back-end to simplify creation of advanced RL environments."},
-
-  {q:"What property does 'Verde' bring to ML according to Gensyn?", 
-   o:["Faster GPUs","Reproducible verification over untrusted compute (verifiability)","Better image quality","Automatic hyperparameter tuning"], a:1,
-   e:"Verde is about verification and reproducible operators enabling verifiable ML programs on untrusted nodes."},
-
-  {q:"Gensyn's site talks about 'GPT@home' — what is the basic idea?", 
-   o:["A desktop GUI app","Decentralized/participant-driven training across many devices (like 'homes')","A new token","A proprietary cloud service only"], a:1,
-   e:"'GPT@home' refers to decentralized training across many devices, similar to volunteer distributed compute."},
-
-  {q:"Which license is mentioned for parts of Gensyn's open-source work?", 
-   o:["GPLv3","MIT","Apache 1.0","Proprietary"], a:1,
-   e:"Some Gensyn open-source code (e.g., RL Swarm) is released under the MIT license."},
-
-  {q:"Which of these is an objective of SAPO (from Gensyn research summaries)?", 
-   o:["A new optimizer for supervised fine-tuning","A meta-algorithm that wraps around policy gradient methods","An image dataset","A token bridge"], a:1,
-   e:"SAPO is a meta-algorithm related to policy-gradient RL training methods."},
-
-  {q:"What kind of team does Gensyn describe itself as?", 
-   o:["Large centralized corporation","Small, distributed, meritocratic team","A government agency","A university department"], a:1,
-   e:"Gensyn describes itself as a small, distributed, meritocratic team building ML infrastructure."},
-
-  {q:"Which page is the best place to find Gensyn's job openings and roles?", 
-   o:["Blog","Careers page on gensyn.ai","Their X profile only","No jobs listed"], a:1,
-   e:"The site's 'Work at Gensyn' (Careers) lists open roles and positions."},
-
-  {q:"What general benefit does decentralised training provide according to Gensyn's posts?", 
-   o:["Eliminates need for optimization algorithms","Enables training at massive scale across diverse hardware","Makes training instantaneous","Removes the need for datasets"], a:1,
-   e:"Decentralization allows leveraging diverse, distributed hardware to scale training more affordably."},
-
-  {q:"Which of the following is an explicit feature/goal of Gensyn's 'Judge' product?", 
-   o:["Cryptographically verifiable evaluation at scale","Image generation","Model distillation","Private messaging"], a:0,
-   e:"Judge is built to provide cryptographically verifiable AI evaluation at scale."},
-
-  {q:"Gensyn links to documentation and litepaper. Where are those hosted (hint: docs link)?", 
-   o:["docs.gensyn.ai","github only","medium.com","No docs"], a:0,
-   e:"Gensyn exposes docs and a litepaper (e.g., docs.gensyn.ai) for deeper technical reading."},
-
-  {q:"Which approach is emphasized across Gensyn's research for robustness/performance?", 
-   o:["Centralized only training","Heterogeneous ensembles and communication-efficient strategies","Only very small models","Single-node training"], a:1,
-   e:"Gensyn researches heterogeneous expert ensembles and communication-efficient training approaches."}
-];
-
-let current = 0;
-let score = 0;
-let answered = Array(questions.length).fill(null);
-const qCountEl = document.getElementById('qCount');
-const progressBar = document.getElementById('progressBar');
-const questionText = document.getElementById('questionText');
-const optionsEl = document.getElementById('options');
-const prevBtn = document.getElementById('prevBtn');
-const nextBtn = document.getElementById('nextBtn');
-const skipBtn = document.getElementById('skipBtn');
-const scoreChip = document.getElementById('scoreChip');
-const resultCard = document.getElementById('resultCard');
-const resultText = document.getElementById('resultText');
-const explainText = document.getElementById('explainText');
-const timerEl = document.getElementById('timer');
-const confettiContainer = document.getElementById('confetti');
-
-function renderQuestion(i){
-  const q = questions[i];
-  qCountEl.textContent = `Question ${i+1} / ${questions.length}`;
-  progressBar.style.width = `${((i)/questions.length)*100}%`;
-  questionText.textContent = q.q;
-  optionsEl.innerHTML = '';
-  q.o.forEach((opt, idx)=>{
-    const d = document.createElement('button');
-    d.className = 'opt';
-    d.setAttribute('data-idx', idx);
-    d.setAttribute('role','button');
-    d.innerHTML = `<div class="letter">${String.fromCharCode(65+idx)}</div><div style="flex:1;text-align:left">${opt}</div>`;
-    d.onclick = ()=>selectOption(i, idx, d);
-    optionsEl.appendChild(d);
-  });
-  // state controls
-  prevBtn.disabled = i === 0;
-  nextBtn.textContent = (i === questions.length-1) ? 'Finish' : 'Next ▶';
-  resultCard.style.display = 'none';
-}
-
-function selectOption(qIndex, optionIndex, btnEl){
-  if(answered[qIndex] !== null) return; // prevent re-answer
-  answered[qIndex] = optionIndex;
-  const correctIndex = questions[qIndex].a;
-  // mark options
-  Array.from(optionsEl.children).forEach((el)=>{
-    const idx = Number(el.getAttribute('data-idx'));
-    if(idx === correctIndex) el.classList.add('correct');
-    if(idx === optionIndex && optionIndex !== correctIndex) el.classList.add('wrong');
-    el.disabled = true;
-  });
-  // scoring
-  if(optionIndex === correctIndex){
-    score += 1;
-    scoreChip.textContent = `Score: ${score}`;
-  }
-  // show explanation & small result card
-  resultText.textContent = (optionIndex === correctIndex) ? 'Correct ✅' : `Wrong — correct: ${String.fromCharCode(65+correctIndex)}`;
-  explainText.textContent = questions[qIndex].e;
-  resultCard.style.display = 'block';
-  // auto advance after short delay for UX
-  setTimeout(()=> {
-    if(current < questions.length-1) { current++; renderQuestion(current); }
-    else showFinal();
-  }, 950);
-}
-
-prevBtn.addEventListener('click', ()=>{
-  if(current>0) { current--; renderQuestion(current); }
-});
-nextBtn.addEventListener('click', ()=>{
-  // if not answered, treat as skip/no-point
-  if(answered[current] === null){
-    answered[current] = -1;
-  }
-  if(current < questions.length-1){
-    current++; renderQuestion(current);
-  } else {
-    showFinal();
-  }
-});
-skipBtn.addEventListener('click', ()=>{
-  // mark skipped if not answered
-  if(answered[current] === null) answered[current] = -1;
-  if(current < questions.length-1) { current++; renderQuestion(current); }
-  else showFinal();
-});
-
-/* final scoring */
-function showFinal(){
-  progressBar.style.width = '100%';
-  // hide options and show a final summary in resultCard
-  resultCard.style.display = 'block';
-  const percent = Math.round((score/questions.length)*100);
-  resultText.innerHTML = `Your score: ${score} / ${questions.length} — ${percent}%`;
-  let msg = '';
-  if(percent >= 90) { msg = 'Masterful — you know Gensyn well!'; launchConfetti(); }
-  else if(percent >= 70) msg = 'Great job — solid knowledge.';
-  else if(percent >= 40) msg = 'Good start — a little more reading will help.';
-  else msg = 'Keep learning — check the Gensyn blog & docs.';
-  explainText.innerHTML = `<div style="margin-top:6px;color:var(--muted)">${msg}</div>
-  <div style="margin-top:10px"><button class="btn primary" onclick="restart()">Retake Quiz</button>
-  <button class="btn" style="margin-left:8px" onclick="reviewAnswers()">Review Answers</button></div>`;
-  scoreChip.textContent = `Score: ${score}`;
-}
-
-/* review mode: show all questions with correct/wrong markings */
-function reviewAnswers(){
-  // create a simple review modal (replace card content)
-  const container = document.querySelector('.card');
-  container.innerHTML = '<h3 style="margin-top:0">Review — your answers</h3>';
-  questions.forEach((qq, i)=>{
-    const el = document.createElement('div');
-    el.style.padding = '12px';
-    el.style.borderBottom = '1px solid rgba(255,255,255,0.03)';
-    el.innerHTML = `<strong>Q${i+1}.</strong> ${qq.q} <div style="margin-top:8px;color:var(--muted)">Correct: ${String.fromCharCode(65+qq.a)} — ${qq.o[qq.a]}</div>
-    <div style="margin-top:6px;color:${answered[i]===qq.a ? 'var(--correct)' : 'var(--wrong)'}">Your answer: ${answered[i] >=0 ? String.fromCharCode(65+answered[i]) : 'Skipped'}</div>
-    <div style="margin-top:6px;color:var(--muted)">${qq.e}</div>`;
-    container.appendChild(el);
-  });
-  const back = document.createElement('div');
-  back.style.marginTop = '12px';
-  back.innerHTML = `<button class="btn" onclick="location.reload()">Back to start</button>`;
-  container.appendChild(back);
-}
-
-/* restart */
-function restart(){ location.reload(); }
-
-/* timer (just shows load time) */
-const start = Date.now();
-setTimeout(()=>{ timerEl.textContent = Math.round((Date.now()-start)/1000) + 's'; }, 400);
-
-/* confetti generator */
-function launchConfetti(){
-  const colors = ['#6ee7b7','#60a5fa','#f472b6','#facc15','#fb923c'];
-  for(let i=0;i<32;i++){
-    const div = document.createElement('div');
-    div.className = 'piece';
-    div.style.left = Math.random()*100 + '%';
-    div.style.background = colors[Math.floor(Math.random()*colors.length)];
-    div.style.top = (-10 - Math.random()*20) + 'vh';
-    div.style.transform = `rotate(${Math.random()*360}deg)`;
-    div.style.animationDelay = (Math.random()*0.5)+'s';
-    div.style.animationDuration = (1.6 + Math.random()*1.2)+'s';
-    confettiContainer.appendChild(div);
-    // remove after animation
-    setTimeout(()=>div.remove(), 3500);
-  }
-}
-
-/* init */
-renderQuestion(current);
-</script>
+<!-- (rest of your original HTML and <script> unchanged) -->
 </body>
 </html>
-
